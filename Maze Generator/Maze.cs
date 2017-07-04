@@ -17,111 +17,80 @@ namespace Maze_Generator
         /// <param name="totalHeight">The maximum height of the maze</param>
         public Maze(int totalWidth, int totalHeight)
         {
-            this.maze = new Cell[totalHeight, totalWidth];
+            _maze = new Cell[totalHeight, totalWidth];
         }
 
         /// <summary>
         /// Indicates the current sleeping time (used to slow operation)
         /// </summary>
-        public int Sleep
-        {
-            get;
-            set;
-        }
+        public int Sleep { get; set; }
 
-        private const int sleepPeriod = 1000;
+        private const int SleepPeriod = 1000;
 
         /// <summary>
         /// Indicates the currnet width the user selects
         /// </summary>
-        private int width;
+        private int _width;
 
         /// <summary>
         /// /// Indicates the currnet height the user selects
         /// </summary>
-        private int height;
-
-        /// <summary>
-        /// Used to draw the red line while the maze is being generated
-        /// </summary>
-        private Point currentGenerateLocation;
-
-        /// <summary>
-        /// Used to distinguish different directions in the right-hand rule
-        /// </summary>
-        private enum Directions
-        {
-            Up,
-            Down,
-            Left,
-            Right
-        }
+        private int _height;
 
         /// <summary>
         /// The array that carries all the Cell instances in the maze
         /// </summary>
-        private Cell[,] maze;
+        private readonly Cell[,] _maze;
 
         /// <summary>
         /// Indicates the maze begin
         /// </summary>
-        private Cell begin;
+        private Cell _begin;
 
         /// <summary>
         /// Indicates the maze end
         /// </summary>
-        private Cell end;
+        private Cell _end;
 
         /// <summary>
         /// Used to view current position when the maze is being solved
         /// </summary>
-        private Point currentSolvePos;
-
-        /// <summary>
-        /// Indicates the pen of location drawing
-        /// </summary>
-        private Pen locationPen = new Pen(Brushes.IndianRed, 5);
+        private Point _currentSolvePos;
 
         /// <summary>
         /// Indicates the pen used to draw the maze walls
         /// </summary>
-        private Pen mazePen = new Pen(Brushes.WhiteSmoke, 3);
+        private Pen _mazePen = new Pen(Brushes.White, 3);
 
         /// <summary>
         /// Indicates the width of one rectangle on the maze
         /// </summary>
-        private int unitX
-        {
-            get { return this.maze.GetLength(1) / this.width; }
-        }
+        private int UnitX => _maze.GetLength(1) / _width;
 
         /// <summary>
         /// Indicates the height of one rectangle on the maze
         /// </summary>
-        private int unitY
-        {
-            get { return this.maze.GetLength(0) / this.height; }
-        }
+        private int UnitY => _maze.GetLength(0) / _height;
 
         /// <summary>
         /// Gets a value whether the maze is busy in a job
         /// </summary>
-        private bool working;
+        private bool _working;
 
         /// <summary>
         /// Used to draw the found path
         /// </summary>
-        private List<Cell> foundPath = new List<Cell>();
+        private readonly List<Cell> _foundPath = new List<Cell>();
 
         /// <summary>
         /// Gets a value indicates whether the Maze is busy in solving
         /// </summary>
-        private bool solving;
+        private bool _solving;
 
         /// <summary>
         /// Used to generate maze
         /// </summary>
-        private Random random = new Random();
+        private readonly Random _random = new Random();
 
         /// <summary>
         /// Generates a maze with the specific size
@@ -131,17 +100,14 @@ namespace Maze_Generator
         /// <param name="method">indicates the method used to generate the maze</param>
         public void Generate(int width, int height, int method)
         {
-            this.working = true;
+            _working = true;
 
-            this.initailze(this.maze, width, height);
+            Initailze(_maze, width, height);
 
-            this.mazePen.Dispose();
-            this.mazePen = this.unitX < 5 ? new Pen(Brushes.WhiteSmoke, 1) : new Pen(Brushes.WhiteSmoke, 3);
-            if (method == 0)
-                this.depthFirstSearchMazeGeneration(this.maze, this.width, this.height);
-            else
-                this.breadthFirstSearchMazeGeneration(this.maze, this.width, this.height);
-            this.working = false;
+            _mazePen.Dispose();
+            _mazePen = UnitX < 5 ? new Pen(Brushes.WhiteSmoke, 1) : new Pen(Brushes.WhiteSmoke, 3);
+            BreadthFirstSearchMazeGeneration(_maze, _width, _height);
+            _working = false;
         }
 
         /// <summary>
@@ -150,57 +116,18 @@ namespace Maze_Generator
         /// <param name="arr">The maze array</param>
         /// <param name="width">Number of squares in width</param>
         /// <param name="height">Number of squares in height</param>
-        private void initailze(Cell[,] arr, int width, int height)
+        private void Initailze(Cell[,] arr, int width, int height)
         {
-            this.width = width;
-            this.height = height;
+            _width = width;
+            _height = height;
 
-            for (int i = 0; i < this.height; i++)
+            for (int i = 0; i < _height; i++)
             {
-                for (int j = 0; j < this.width; j++)
+                for (int j = 0; j < _width; j++)
                 {
-                    arr[i, j] = new Cell(new Point(j * this.unitX, i * this.unitY), new Point(j, i));
+                    arr[i, j] = new Cell(new Point(j * UnitX, i * UnitY), new Point(j, i));
                 }
             }
-        }
-
-        /// <summary>
-        /// Generate a maze with the Depth-First Search approach
-        /// </summary>
-        /// <param name="arr">the array of cells</param>
-        /// <param name="width">A width for the maze</param>
-        /// <param name="height">A height for the maze</param>
-        private void depthFirstSearchMazeGeneration(Cell[,] arr, int width, int height)
-        {
-            Stack<Cell> stack = new Stack<Cell>();
-            Random random = new Random();
-
-            Cell location = arr[this.random.Next(height), this.random.Next(width)];
-            stack.Push(location);
-            
-            while (stack.Count > 0)
-            {
-                List<Point> neighbours = this.getNeighbours(arr, location, width, height);
-                if (neighbours.Count > 0)
-                {
-                    Point temp = neighbours[random.Next(neighbours.Count)];
-
-                    this.currentGenerateLocation = temp;
-
-                    this.knockWall(arr, ref location, ref arr[temp.Y, temp.X]);
-
-                    stack.Push(location);
-                    location = arr[temp.Y, temp.X];
-                }
-                else
-                {
-                    location = stack.Pop();
-                }
-
-                Thread.SpinWait(this.Sleep * sleepPeriod);
-            }
-
-            this.makeMazeBeginEnd(this.maze);
         }
 
         /// <summary>
@@ -209,24 +136,22 @@ namespace Maze_Generator
         /// <param name="arr">the array of cells</param>
         /// <param name="width">A width for the maze</param>
         /// <param name="height">A height for the maze</param>
-        private void breadthFirstSearchMazeGeneration(Cell[,] arr, int width, int height)
+        private void BreadthFirstSearchMazeGeneration(Cell[,] arr, int width, int height)
         {
             Queue<Cell> queue = new Queue<Cell>();
             Random random = new Random();
 
-            Cell location = arr[this.random.Next(height), this.random.Next(width)];
+            Cell location = arr[_random.Next(height), _random.Next(width)];
             queue.Enqueue(location);
 
             while (queue.Count > 0)
             {
-                List<Point> neighbours = this.getNeighbours(arr, location, width, height);
+                List<Point> neighbours = GetNeighbours(arr, location, width, height);
                 if (neighbours.Count > 0)
                 {
                     Point temp = neighbours[random.Next(neighbours.Count)];
 
-                    this.currentGenerateLocation = temp;
-
-                    this.knockWall(arr, ref location, ref arr[temp.Y, temp.X]);
+                    KnockWall(arr, ref location, ref arr[temp.Y, temp.X]);
 
                     queue.Enqueue(location);
                     location = arr[temp.Y, temp.X];
@@ -236,27 +161,24 @@ namespace Maze_Generator
                     location = queue.Dequeue();
                 }
 
-                Thread.SpinWait(this.Sleep * sleepPeriod);
+                Thread.SpinWait(Sleep * SleepPeriod);
             }
 
-            this.makeMazeBeginEnd(this.maze);
+            MakeMazeBeginEnd(_maze);
         }
 
         /// <summary>
         /// Used to create a begin and end for a maze
         /// </summary>
         /// <param name="arr">The array of the maze</param>
-        private void makeMazeBeginEnd(Cell[,] arr)
+        private void MakeMazeBeginEnd(Cell[,] arr)
         {
-            Point temp = new Point();
-            temp.Y = this.random.Next(this.height);
-            arr[temp.Y, temp.X].LeftWall = false;
-            this.begin = arr[temp.Y, temp.X];
+            Point temp = new Point {Y = _random.Next(_height), X = _random.Next(_width)};
 
-            temp.Y = this.random.Next(this.height);
-            temp.X = this.width - 1;
-            arr[temp.Y, temp.X].RightWall = false;
-            this.end = arr[temp.Y, temp.X];
+            _begin = arr[temp.Y, temp.X];
+            temp.Y = _random.Next(_height);
+            temp.X = _random.Next(_width);
+            _end = arr[temp.Y, temp.X];
         }
 
         /// <summary>
@@ -265,7 +187,7 @@ namespace Maze_Generator
         /// <param name="maze">The maze array</param>
         /// <param name="current">the current cell</param>
         /// <param name="next">the next neighbor cell</param>
-        private void knockWall(Cell[,] maze, ref Cell current, ref Cell next)
+        private static void KnockWall(Cell[,] maze, ref Cell current, ref Cell next)
         {
             // The next is down
             if (current.Position.X == next.Position.X && current.Position.Y > next.Position.Y)
@@ -299,9 +221,9 @@ namespace Maze_Generator
         /// <param name="arr">the maze array</param>
         /// <param name="cell">The cell to check</param>
         /// <returns></returns>
-        private bool allWallsIntact(Cell[,] arr, Cell cell)
+        private static bool AllWallsIntact(Cell[,] arr, Cell cell)
         {
-            for (int i = 0; i < 4; i++)
+            for (var i = 0; i < 4; i++)
             {
                 if (!arr[cell.Position.Y, cell.Position.X][i])
                 {
@@ -320,20 +242,20 @@ namespace Maze_Generator
         /// <param name="width">The width of the maze</param>
         /// <param name="height">The height of the maze</param>
         /// <returns></returns>
-        private List<Point> getNeighbours(Cell[,] arr, Cell cell, int width, int height)
+        private static List<Point> GetNeighbours(Cell[,] arr, Cell cell, int width, int height)
         {
             Point temp = cell.Position;
             List<Point> availablePlaces = new List<Point>();
 
             // Left
             temp.X = cell.Position.X - 1;
-            if (temp.X >= 0 && this.allWallsIntact(arr, arr[temp.Y, temp.X]))
+            if (temp.X >= 0 && AllWallsIntact(arr, arr[temp.Y, temp.X]))
             {
                 availablePlaces.Add(temp);
             }
             // Right
             temp.X = cell.Position.X + 1;
-            if (temp.X < width && this.allWallsIntact(arr, arr[temp.Y, temp.X]))
+            if (temp.X < width && AllWallsIntact(arr, arr[temp.Y, temp.X]))
             {
                 availablePlaces.Add(temp);
             }
@@ -341,13 +263,13 @@ namespace Maze_Generator
             // Up
             temp.X = cell.Position.X;
             temp.Y = cell.Position.Y - 1;
-            if (temp.Y >= 0 && this.allWallsIntact(arr, arr[temp.Y, temp.X]))
+            if (temp.Y >= 0 && AllWallsIntact(arr, arr[temp.Y, temp.X]))
             {
                 availablePlaces.Add(temp);
             }
             // Down
             temp.Y = cell.Position.Y + 1;
-            if (temp.Y < height && this.allWallsIntact(arr, arr[temp.Y, temp.X]))
+            if (temp.Y < height && AllWallsIntact(arr, arr[temp.Y, temp.X]))
             {
                 availablePlaces.Add(temp);
             }
@@ -363,65 +285,40 @@ namespace Maze_Generator
             g.Clear(Color.Black);
 
             // in case Generate() have not been called yet
-            if (this.width == 0)
-                return;
+            if (_width == 0) return;
 
             // draws begin
-            g.FillRectangle(Brushes.Red, new Rectangle(this.begin.Location, new Size(this.unitX, this.unitY)));
+            g.FillRectangle(Brushes.Red, new Rectangle(_begin.Location, new Size(UnitX, UnitY)));
 
-            // loap on every cell in the bounds
-            for (int i = 0; i < height; i++)
+            // loop on every cell in the bounds
+            for (var i = 0; i < _height; i++)
             {
-                for (int j = 0; j < width; j++)
+                for (var j = 0; j < _width; j++)
                 {
                     // Visited cell: fill green square
-                    if (this.maze[i, j].Visited)
+                    if (_maze[i, j].Visited)
                     {
-                        g.FillRectangle(Brushes.Green, new Rectangle(this.maze[i, j].Location, new Size(this.unitX, this.unitY)));
+                        g.FillRectangle(
+                            _maze[i, j].Path == Cell.Paths.None ? Brushes.DarkRed : Brushes.Green,
+                            new Rectangle(_maze[i, j].Location, new Size(UnitX, UnitY)));
                     }
-                    
-                    // draws a red line indicates the current generation location
-                    if (this.working && this.currentGenerateLocation.X == j && this.currentGenerateLocation.Y == i)
+
+                    if (_end.Position.X == j && _end.Position.Y == i)
                     {
-                        Point target = new Point(j * unitX, i * unitY);
-                        drawVerticalWall(g, ref target, unitY, this.locationPen);
+                        g.FillRectangle(Brushes.Blue, new Rectangle(_maze[i, j].Location, new Size(UnitX, UnitY)));
                     }
 
                     // fills the current square in the solving process
-                    if (this.solving && this.currentSolvePos.X == j && this.currentSolvePos.Y == i)
+                    if (_solving && _currentSolvePos.X == j && _currentSolvePos.Y == i)
                     {
-                        g.FillRectangle(Brushes.IndianRed, new Rectangle(this.maze[i,j].Location, new Size(this.unitX, this.unitY)));
+                        if (_currentSolvePos.X != _begin.Position.Y && _currentSolvePos.Y != _begin.Position.X)
+                            g.FillRectangle(
+                                Brushes.LimeGreen,
+                                new Rectangle(_maze[i, j].Location, new Size(UnitX, UnitY)));
                     }
 
                     // Draw the intact walls
-                    this.maze[i, j].Draw(g, mazePen, new Size(this.unitX, this.unitY));
-
-                    if (this.maze[i, j].Path != Cell.Paths.None)
-                    {
-                        switch (this.maze[i, j].Path)
-                        {
-                            case Cell.Paths.Up:
-                                g.DrawLine(this.locationPen,
-                    new Point(this.maze[i, j].Location.X + unitX / 2, this.maze[i, j].Location.Y + unitY / 2),
-                    new Point(this.maze[i - 1, j].Location.X + unitX / 2, this.maze[i - 1, j].Location.Y + unitY / 2));
-                                break;
-                            case Cell.Paths.Down:
-                                g.DrawLine(this.locationPen,
-                    new Point(this.maze[i, j].Location.X + unitX / 2, this.maze[i, j].Location.Y + unitY / 2),
-                    new Point(this.maze[i + 1, j].Location.X + unitX / 2, this.maze[i + 1, j].Location.Y + unitY / 2));
-                                break;
-                            case Cell.Paths.Right:
-                                g.DrawLine(this.locationPen,
-                    new Point(this.maze[i, j].Location.X + unitX / 2, this.maze[i, j].Location.Y + unitY / 2),
-                    new Point(this.maze[i, j + 1].Location.X + unitX / 2, this.maze[i, j + 1].Location.Y + unitY / 2));
-                                break;
-                            default:
-                                g.DrawLine(this.locationPen,
-                    new Point(this.maze[i, j].Location.X + unitX / 2, this.maze[i, j].Location.Y + unitY / 2),
-                    new Point(this.maze[i, j - 1].Location.X + unitX / 2, this.maze[i, j - 1].Location.Y + unitY / 2));
-                                break;
-                        }
-                    }
+                    _maze[i, j].Draw(g, _mazePen, new Size(UnitX, UnitY));
                 }
             }
         }
@@ -433,42 +330,18 @@ namespace Maze_Generator
         public void DrawPath(Graphics g)
         {
             // maze-begin square
-            g.FillRectangle(Brushes.Red, new Rectangle(this.begin.Location, new Size(this.unitX, this.unitY)));
-
-            // loap on every item in the list
-            for (int i = 1; i < this.foundPath.Count; i++)
-            {
-                // draw a line between the (i item) and (i - 1 item)
-                // line begins in the middle of both squares so we add unit / 2
-                g.DrawLine(this.locationPen,
-                    new Point(this.foundPath[i].Location.X + unitX / 2, this.foundPath[i].Location.Y + unitY / 2),
-                    new Point(this.foundPath[i - 1].Location.X + unitX / 2, this.foundPath[i - 1].Location.Y + unitY / 2));
-            }
-        }
-
-        /// <summary>
-        /// Draws a vertical line with the specifc height and pen
-        /// </summary>
-        /// <param name="g">a surface to draw on</param>
-        /// <param name="location">The point of line begin</param>
-        /// <param name="height">The height of line</param>
-        /// <param name="pen">The pen used to draw</param>
-        private static void drawVerticalWall(Graphics g, ref Point location, int height, Pen pen)
-        {
-            g.DrawLine(pen,
-                location,
-                new Point(location.X, location.Y + height));
+            g.FillRectangle(Brushes.Red, new Rectangle(_begin.Location, new Size(UnitX, UnitY)));
         }
 
         /// <summary>
         /// Used to reset all cells
         /// </summary>
         /// <param name="arr">The maze array to reset elements</param>
-        private void unvisitAll(Cell[,] arr)
+        private void UnvisitAll(Cell[,] arr)
         {
-            for (int i = 0; i < this.maze.GetLength(0); i++)
+            for (int i = 0; i < _maze.GetLength(0); i++)
             {
-                for (int j = 0; j < this.maze.GetLength(1); j++)
+                for (int j = 0; j < _maze.GetLength(1); j++)
                 {
                     arr[i, j].Visited = false;
                     arr[i, j].Path = Cell.Paths.None;
@@ -479,650 +352,105 @@ namespace Maze_Generator
         /// <summary>
         /// Solves the current maze using a specific method
         /// </summary>
-        /// <param name="method">The used method to solve with</param>
-        public unsafe void Solve(int method)
+        public unsafe void Solve()
         {
-            this.solving = true;
+            _solving = true;
             // initialize
-            this.foundPath.Clear();
-            this.unvisitAll(this.maze);
-            
-            // selecting the method
-            if (method == 0)
-            {
-                if (this.height * this.width < 40 * 80)
-                    fixed (Cell* ptr = &this.begin)
-                        this.depthFirstSearchSolve(ptr, ref this.end);
-                else
-                    this.iterativeDepthFirstSearchSolve(this.begin, this.end);
-            }
-            else if (method == 1)
-                this.breadthFirstSearchSolve(this.begin, this.end);
-            else if (method == 2)
-                this.iterativeRightHandRuleSolve(this.begin, Directions.Right);
+            _foundPath.Clear();
+            UnvisitAll(_maze);
 
-            this.solving = false;
+            fixed (Cell* ptr = &_begin) Solve(ptr, ref _end);
+
+            _solving = false;
         }
 
         /// <summary>
-        /// Solves a maze with recursive backtracking DFS - 
-        /// DON'T USE! IT IS FOR DEMONSTRATING PURPOSES ONLY!
+        /// Solves a maze with recursive backtracking
         /// </summary>
-        /// <param name="start">The start of the maze cell</param>
+        /// <param name="current">The current maze cell</param>
         /// <param name="end">The end of the maze cell</param>
         /// <returns>returrns true if the path is found</returns>
-        private unsafe bool depthFirstSearchSolve(Cell *st, ref Cell end)
+        private unsafe bool Solve(Cell*current, ref Cell end)
         {
-            // base condition
-            if (st->Position == end.Position)
+            int currentY = current->Position.Y;
+            int currentX = current->Position.X;
+            if (current->Position == end.Position)
             {
-                // make it visited in order to be drawed with green
-                this.maze[st->Position.Y, st->Position.X].Visited = true;
+                // make it visited for it to be drawn with green
+                _maze[currentY, currentX].Visited = true;
                 // add end point to the foundPath
-                this.foundPath.Add(*st);
+                _foundPath.Add(*current);
                 return true;
             }
-            
 
-            // has been visited alread, return
-            if (this.maze[st->Position.Y, st->Position.X].Visited)
-                return false;
+            // has been visited already so it doesnt reverse
+            if (_maze[currentY, currentX].Visited) return false;
 
-            // for the graphics
-            this.currentSolvePos = st->Position;
-            // used to slow the process
-            Thread.SpinWait(this.Sleep * sleepPeriod);
+            _currentSolvePos = current->Position;
+            Thread.SpinWait(Sleep * SleepPeriod);
 
             // mark as visited
-            this.maze[st->Position.Y, st->Position.X].Visited = true;
-
-            // Check every neighbor cell
-            // If it exists (not outside the maze bounds)
-            // and if there is no wall between start and it
-            // recursive call this method with it
-            // if it returns true, add the current start to foundPath and return true too
-            // else complete
+            _maze[currentY, currentX].Visited = true;
 
             // Left
-            if (st->Position.X - 1 >= 0 && !this.maze[st->Position.Y, st->Position.X - 1].RightWall)
+            if (currentX - 1 >= 0 && !current->LeftWall)
             {
-                this.maze[st->Position.Y, st->Position.X].Path = Cell.Paths.Left;
-                fixed (Cell *ptr = &this.maze[st->Position.Y, st->Position.X - 1])
+                _maze[currentY, currentX].Path = Cell.Paths.Left;
+                fixed (Cell* ptr = &_maze[currentY, currentX - 1])
                 {
-                    if (this.depthFirstSearchSolve(ptr, ref end))
+                    if (Solve(ptr, ref end))
                     {
-                        this.foundPath.Add(*st);
+                        _foundPath.Add(*current);
+
                         return true;
                     }
                 }
             }
-            // for the graphics
-            this.currentSolvePos = st->Position;
-            // used to slow the process
-            Thread.SpinWait(this.Sleep * sleepPeriod);
             // Right
-            if (st->Position.X + 1 < this.width && !this.maze[st->Position.Y, st->Position.X + 1].LeftWall)
+            if (currentX + 1 < _width && !current->RightWall)
             {
-                this.maze[st->Position.Y, st->Position.X].Path = Cell.Paths.Right;
-                fixed (Cell* ptr = &this.maze[st->Position.Y, st->Position.X + 1])
+                _maze[currentY, currentX].Path = Cell.Paths.Right;
+                fixed (Cell* ptr = &_maze[currentY, currentX + 1])
                 {
-                    if (this.depthFirstSearchSolve(ptr, ref end))
+                    if (Solve(ptr, ref end))
                     {
-                        this.foundPath.Add(*st);
+                        _foundPath.Add(*current);
+
                         return true;
                     }
                 }
             }
-            // for the graphics
-            this.currentSolvePos = st->Position;
-            // used to slow the process
-            Thread.SpinWait(this.Sleep * sleepPeriod);
-            
             // Up
-            if (st->Position.Y - 1 >= 0 && !this.maze[st->Position.Y - 1, st->Position.X].DownWall)
+            if (currentY - 1 >= 0 && !current->UpWall)
             {
-                this.maze[st->Position.Y, st->Position.X].Path = Cell.Paths.Up;
-                fixed (Cell* ptr = &this.maze[st->Position.Y - 1, st->Position.X])
+                _maze[currentY, currentX].Path = Cell.Paths.Up;
+                fixed (Cell* ptr = &_maze[currentY - 1, currentX])
                 {
-                    if (this.depthFirstSearchSolve(ptr, ref end))
+                    if (Solve(ptr, ref end))
                     {
-                        this.foundPath.Add(*st);
+                        _foundPath.Add(*current);
+
                         return true;
                     }
                 }
             }
-
-            // for the graphics
-            this.currentSolvePos = st->Position;
-            // used to slow the process
-            Thread.SpinWait(this.Sleep * sleepPeriod);
-
             // Down
-            if (st->Position.Y + 1 < this.height && !this.maze[st->Position.Y + 1, st->Position.X].UpWall)
+            if (currentY + 1 < _height && !current->DownWall)
             {
-                this.maze[st->Position.Y, st->Position.X].Path = Cell.Paths.Down;
-                fixed (Cell* ptr = &this.maze[st->Position.Y + 1, st->Position.X])
+                _maze[currentY, currentX].Path = Cell.Paths.Down;
+                fixed (Cell* ptr = &_maze[currentY + 1, currentX])
                 {
-                    if (this.depthFirstSearchSolve(ptr, ref end))
+                    if (Solve(ptr, ref end))
                     {
-                        this.foundPath.Add(*st);
+                        _foundPath.Add(*current);
+
                         return true;
                     }
                 }
             }
-            this.maze[st->Position.Y, st->Position.X].Path = Cell.Paths.None;
+            _maze[currentY, currentX].Path = Cell.Paths.None;
+
             return false;
-        }
-
-        /// <summary>
-        /// Solves a maze with iterative backtracking DFS
-        /// </summary>
-        /// <param name="start">The start of the maze cell</param>
-        /// <param name="end">The end of the maze cell</param>
-        /// <returns>returrns true if the path is found</returns>
-        private unsafe bool iterativeDepthFirstSearchSolve(Cell start, Cell end)
-        {
-            // unsafe indicates that this method uses pointers
-            Stack<Cell> stack = new Stack<Cell>();
-
-            stack.Push(start);
-
-            while (stack.Count > 0)
-            {
-                Cell temp = stack.Pop();
-
-                // base condition
-                if (temp.Position == end.Position)
-                {
-                    // add end point to foundPath
-                    this.foundPath.Add(temp);
-                    // dereference all pointers chain until you reach the begin
-                    while (temp.Previous != null)
-                    {
-                        this.foundPath.Add(temp);
-                        temp = *temp.Previous;
-                    }
-                    // add begin point to foundPath
-                    this.foundPath.Add(temp);
-                    // to view green square on it
-                    this.maze[temp.Position.Y, temp.Position.X].Visited = true;
-                    return true;
-                }
-
-                // for the graphics
-                this.currentSolvePos = temp.Position;
-
-                // mark as visited to prevent infinite loops
-                this.maze[temp.Position.Y, temp.Position.X].Visited = true;
-
-                // used to slow operation
-                Thread.SpinWait(this.Sleep * sleepPeriod);
-
-
-                // Check every neighbor cell
-                // If it exists (not outside the maze bounds)
-                // and if there is no wall between start and it
-                    // set the next.Previous to the current cell
-                    // push next into stack
-                // else complete
-
-
-                // Left
-                if (temp.Position.X - 1 >= 0
-                    && !this.maze[temp.Position.Y, temp.Position.X - 1].RightWall
-                    && !this.maze[temp.Position.Y, temp.Position.X - 1].Visited)
-                {
-                    // fixed must be used to indicate that current memory-location won't be changed
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y, temp.Position.X - 1].Previous = cell;
-                    stack.Push(this.maze[temp.Position.Y, temp.Position.X - 1]);
-                }
-
-                // Right
-                if (temp.Position.X + 1 < this.width
-                    && !this.maze[temp.Position.Y, temp.Position.X + 1].LeftWall
-                    && !this.maze[temp.Position.Y, temp.Position.X + 1].Visited)
-                {
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y, temp.Position.X + 1].Previous = cell;
-                    stack.Push(this.maze[temp.Position.Y, temp.Position.X + 1]);
-                }
-
-                // Up
-                if (temp.Position.Y - 1 >= 0
-                    && !this.maze[temp.Position.Y - 1, temp.Position.X].DownWall
-                    && !this.maze[temp.Position.Y - 1, temp.Position.X].Visited)
-                {
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y - 1, temp.Position.X].Previous = cell;
-                    stack.Push(this.maze[temp.Position.Y - 1, temp.Position.X]);
-                }
-
-                // Down
-                if (temp.Position.Y + 1 < this.height
-                    && !this.maze[temp.Position.Y + 1, temp.Position.X].UpWall
-                    && !this.maze[temp.Position.Y + 1, temp.Position.X].Visited)
-                {
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y + 1, temp.Position.X].Previous = cell;
-                    stack.Push(this.maze[temp.Position.Y + 1, temp.Position.X]);
-                }
-            }
-            // no solution found
-            return false;
-        }
-
-        /// <summary>
-        /// Solves a maze with iterative backtracking BFS
-        /// </summary>
-        /// <param name="start">The start of the maze cell</param>
-        /// <param name="end">The end of the maze cell</param>
-        /// <returns>returrns true if the path is found</returns>
-        private unsafe bool breadthFirstSearchSolve(Cell start, Cell end)
-        {
-            // unsafe indicates that this method uses pointers
-            Queue<Cell> queue = new Queue<Cell>();
-
-            queue.Enqueue(start);
-
-            while (queue.Count > 0)
-            {
-                Cell temp = queue.Dequeue();
-
-                // base condition
-                if (temp.Position == end.Position)
-                {
-                    // add end point to foundPath
-                    this.foundPath.Add(temp);
-                    // dereference all pointers chain until you reach the begin
-                    while (temp.Previous != null)
-                    {
-                        this.foundPath.Add(temp);
-                        temp = *temp.Previous;
-                    }
-                    // add begin point to foundPath
-                    this.foundPath.Add(temp);
-                    // to view green square on it
-                    this.maze[temp.Position.Y, temp.Position.X].Visited = true;
-                    return true;
-                }
-
-                // for the graphics
-                this.currentSolvePos = temp.Position;
-
-                // mark as visited to prevent infinite loops
-                this.maze[temp.Position.Y, temp.Position.X].Visited = true;
-
-                // used to slow operation
-                Thread.SpinWait(this.Sleep * sleepPeriod);
-
-
-                // Check every neighbor cell
-                // If it exists (not outside the maze bounds)
-                // and if there is no wall between start and it
-                    // set the next.Previous to the current cell
-                    // add next into queue
-                // else complete
-
-
-                // Left
-                if (temp.Position.X - 1 >= 0
-                    && !this.maze[temp.Position.Y, temp.Position.X - 1].RightWall
-                    && !this.maze[temp.Position.Y, temp.Position.X - 1].Visited)
-                {
-                    // fixed must be used to indicate that current memory-location won't be changed
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y, temp.Position.X - 1].Previous = cell;
-                    queue.Enqueue(this.maze[temp.Position.Y, temp.Position.X - 1]);
-                }
-
-                // Right
-                if (temp.Position.X + 1 < this.width
-                    && !this.maze[temp.Position.Y, temp.Position.X + 1].LeftWall
-                    && !this.maze[temp.Position.Y, temp.Position.X + 1].Visited)
-                {
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y, temp.Position.X + 1].Previous = cell;
-                    queue.Enqueue(this.maze[temp.Position.Y, temp.Position.X + 1]);
-                }
-
-                // Up
-                if (temp.Position.Y - 1 >= 0
-                    && !this.maze[temp.Position.Y - 1, temp.Position.X].DownWall
-                    && !this.maze[temp.Position.Y - 1, temp.Position.X].Visited)
-                {
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y - 1, temp.Position.X].Previous = cell;
-                    queue.Enqueue(this.maze[temp.Position.Y - 1, temp.Position.X]);
-                }
-
-                // Down
-                if (temp.Position.Y + 1 < this.height
-                    && !this.maze[temp.Position.Y + 1, temp.Position.X].UpWall
-                    && !this.maze[temp.Position.Y + 1, temp.Position.X].Visited)
-                {
-                    fixed (Cell* cell = &this.maze[temp.Position.Y, temp.Position.X])
-                        this.maze[temp.Position.Y + 1, temp.Position.X].Previous = cell;
-                    queue.Enqueue(this.maze[temp.Position.Y + 1, temp.Position.X]);
-                }
-            }
-            // no solution found
-            return false;
-        }
-
-        /// <summary>
-        /// Solves the maze with the right-hand role iteratively
-        /// </summary>
-        /// <param name="start">The maze begin</param>
-        /// <param name="dir">the initial direction</param>
-        private void iterativeRightHandRuleSolve(Cell start, Directions dir)
-        {
-            // look at your right (with respect to your direction)
-            // No wall? go in it.
-            // Wall? look at your front (with respect to your direction)
-            // Wall too? look at your left (with respect to your direction)
-            // Wall too? go back (in the reverse of your direction)
-
-            // note that the right of the right is down, the left of down is right, ect
-        
-            bool flag;
-            // repeat while you didn't reach the end
-            while (start.Position != this.end.Position)
-            {
-                // for graphics
-                this.maze[start.Position.Y, start.Position.X].Visited = true;
-                // for graphics
-                this.currentSolvePos = start.Position;
-
-                // to slow operation
-                Thread.SpinWait(this.Sleep * sleepPeriod);
-
-                switch (dir)
-                {
-                    case Directions.Right:
-                        // has up wall?
-                        flag = start.Position.Y + 1 < height;
-                        if (!flag || this.maze[start.Position.Y + 1, start.Position.X].UpWall)
-                        {
-                            // has left wall?
-                            flag = start.Position.X + 1 < width;
-                            if (!flag || maze[start.Position.Y, start.Position.X + 1].LeftWall)
-                            {
-                                // has down wall ?
-                                flag = start.Position.Y - 1 >= 0;
-                                if (!flag || maze[start.Position.Y - 1, start.Position.X].DownWall)
-                                {
-                                    start = this.maze[start.Position.Y, start.Position.X];
-                                    dir = Directions.Left;
-                                }
-                                else
-                                {
-                                    start = maze[start.Position.Y - 1, start.Position.X];
-                                    dir = Directions.Up;
-                                }
-                            }
-                            else
-                            {
-                                start = this.maze[start.Position.Y, start.Position.X + 1];
-                                dir = Directions.Right;
-                            }
-                        }
-                        else
-                        {
-                            start = this.maze[start.Position.Y + 1, start.Position.X];
-                            dir = Directions.Down;
-                        }
-                        break;
-                    case Directions.Left:
-                        flag = start.Position.Y - 1 >= 0;
-                        if (!flag || maze[start.Position.Y - 1, start.Position.X].DownWall)
-                        {
-                            flag = start.Position.X - 1 >= 0;
-                            if (!flag || maze[start.Position.Y, start.Position.X - 1].RightWall)
-                            {
-                                flag = start.Position.Y + 1 < this.height;
-                                if (!flag || maze[start.Position.Y + 1, start.Position.X].UpWall)
-                                {
-                                    start = maze[start.Position.Y, start.Position.X];
-                                    dir = Directions.Right;
-                                }
-                                else
-                                {
-                                    start = maze[start.Position.Y + 1, start.Position.X];
-                                    dir = Directions.Down;
-                                }
-                            }
-                            else
-                            {
-                                start = maze[start.Position.Y, start.Position.X - 1];
-                                dir = Directions.Left;
-                            }
-                        }
-                        else
-                        {
-                            start = maze[start.Position.Y - 1, start.Position.X];
-                            dir = Directions.Up;
-                        }
-                        break;
-                    case Directions.Up:
-                        flag = start.Position.X + 1 < this.width;
-                        if (!flag || maze[start.Position.Y, start.Position.X + 1].LeftWall)
-                        {
-                            flag = start.Position.Y - 1 >= 0;
-                            if (!flag || maze[start.Position.Y - 1, start.Position.X].DownWall)
-                            {
-                                flag = start.Position.X - 1 >= 0;
-                                if (!flag || maze[start.Position.Y, start.Position.X - 1].RightWall)
-                                {
-                                    start = maze[start.Position.Y, start.Position.X];
-                                    dir = Directions.Down;
-                                }
-                                else
-                                {
-                                    start = maze[start.Position.Y, start.Position.X - 1];
-                                    dir = Directions.Left;
-                                }
-                            }
-                            else
-                            {
-                                start = maze[start.Position.Y - 1, start.Position.X];
-                                dir = Directions.Up;
-                            }
-                        }
-                        else
-                        {
-                            start = maze[start.Position.Y, start.Position.X + 1];
-                            dir = Directions.Right;
-                        }
-                        break;
-                    default:
-                        flag = start.Position.X - 1 >= 0;
-                        if (!flag || maze[start.Position.Y, start.Position.X - 1].RightWall)
-                        {
-                            flag = start.Position.Y + 1 < this.height;
-                            if (!flag || maze[start.Position.Y + 1, start.Position.X].UpWall)
-                            {
-                                flag = start.Position.X + 1 < this.width;
-                                if (!flag || maze[start.Position.Y, start.Position.X + 1].LeftWall)
-                                {
-                                    start = maze[start.Position.Y, start.Position.X];
-                                    dir = Directions.Up;
-                                }
-                                else
-                                {
-                                    start = maze[start.Position.Y, start.Position.X + 1];
-                                    dir = Directions.Right;
-                                }
-                            }
-                            else
-                            {
-                                start = maze[start.Position.Y + 1, start.Position.X];
-                                dir = Directions.Down;
-                            }
-                        }
-                        else
-                        {
-                            start = maze[start.Position.Y, start.Position.X - 1];
-                            dir = Directions.Left;
-                        }
-                        break;
-                }
-            }
-
-            this.maze[start.Position.Y, start.Position.X].Visited = true;
-            this.currentSolvePos = start.Position;
-        }
-
-        /// <summary>
-        /// Solves the maze with the right-hand role recursively -
-        /// DON'T USE! IT IS FOR DEMONSTRATING PURPOSES ONLY!
-        /// </summary>
-        /// <param name="start">The maze begin</param>
-        /// <param name="dir">the initial direction</param>
-        private void rightHandRuleSolve(Cell start, Directions dir)
-        {
-        	 /*بص على يمينك
-        	 فاضي؟ خش من غير كلام كثير
-        	 في حيطة؟ بص قدامك
-        	 في حيطة برضه؟ طب شوف شمالك كده
-        	 حيطة؟ ارجع بقى*/
-
-            // look at your right (with respect to your direction)
-            // No wall? go in it.
-            // Wall? look at your front (with respect to your direction)
-            // Wall too? look at your left (with respect to your direction)
-            // Wall too? go back (in the reverse of your direction)
-
-            // note that the right of the right is down, the left of down is right, ect
-        
-            // has arrived, return
-        	if (start.Position == this.end.Position)
-            {
-        		return;
-        	}
-
-            // mark it as visited for graphics
-            this.maze[start.Position.Y, start.Position.X].Visited = true;
-            // to view the current solving location
-            this.currentSolvePos = start.Position;
-            // to slow operation
-            Thread.SpinWait(this.Sleep * sleepPeriod);
-
-            bool flag;
-
-        	switch (dir)
-        	{
-        	case Directions.Right:
-                    flag = start.Position.Y + 1 < height;
-        		if (!flag || this.maze[start.Position.Y + 1, start.Position.X].UpWall)
-        		{
-                    flag = start.Position.X + 1 < width;
-        			if (!flag || maze[start.Position.Y, start.Position.X + 1].LeftWall)
-        			{
-                        flag = start.Position.Y - 1 >= 0;
-        				if (!flag || maze[start.Position.Y - 1, start.Position.X].DownWall)
-                        {
-        					rightHandRuleSolve(this.maze[start.Position.Y, start.Position.X], Directions.Left);
-        				}
-        				else
-                        {
-        					rightHandRuleSolve(maze[start.Position.Y - 1, start.Position.X], Directions.Up);
-        				}
-        			}
-        			else
-                    {
-        				rightHandRuleSolve(this.maze[start.Position.Y, start.Position.X + 1], Directions.Right);
-        			}
-        		}
-        		else
-                {
-        			rightHandRuleSolve(this.maze[start.Position.Y + 1, start.Position.X], Directions.Down);
-        		}
-        		break;
-        
-        	case Directions.Left:
-                flag = start.Position.Y - 1 >= 0;
-        		if (!flag || maze[start.Position.Y - 1, start.Position.X].DownWall)
-        		{
-                    flag = start.Position.X - 1 >= 0;
-        			if (!flag || maze[start.Position.Y, start.Position.X - 1].RightWall)
-        			{
-                        flag = start.Position.Y + 1 < this.height;
-        				if (!flag || maze[start.Position.Y + 1, start.Position.X].UpWall)
-        				{
-        					rightHandRuleSolve(maze[start.Position.Y, start.Position.X], Directions.Right);
-        				}
-        				else
-                        {
-        					rightHandRuleSolve(maze[start.Position.Y + 1, start.Position.X], Directions.Down);
-        				}
-        			}
-        			else
-                    {
-        				rightHandRuleSolve(maze[start.Position.Y, start.Position.X - 1], Directions.Left);
-        			}
-        		}
-        		else
-                {
-        			rightHandRuleSolve(maze[start.Position.Y - 1, start.Position.X], Directions.Up);
-        		}
-        		break;
-        
-        	case Directions.Up:
-                flag = start.Position.X + 1 < this.width;
-        		if (!flag || maze[start.Position.Y, start.Position.X + 1].LeftWall)
-        		{
-                    flag = start.Position.Y - 1 >= 0;
-        			if (!flag || maze[start.Position.Y - 1, start.Position.X].DownWall)
-        			{
-                        flag = start.Position.X - 1 >= 0;
-        				if (!flag || maze[start.Position.Y, start.Position.X - 1].RightWall)
-        				{
-        					rightHandRuleSolve(maze[start.Position.Y, start.Position.X], Directions.Down);
-        				}
-        				else
-                        {
-        					rightHandRuleSolve(maze[start.Position.Y, start.Position.X - 1], Directions.Left);
-        				}
-        			}
-        			else
-                    {
-        				rightHandRuleSolve(maze[start.Position.Y - 1, start.Position.X], Directions.Up);
-        			}
-        		}
-        		else
-                {
-        			rightHandRuleSolve(maze[start.Position.Y, start.Position.X + 1], Directions.Right);
-        		}
-        		break;
-        	default:
-                flag = start.Position.X - 1 >= 0;
-        		if (!flag || maze[start.Position.Y, start.Position.X - 1].RightWall)
-        		{
-                    flag = start.Position.Y + 1 < this.height;
-        			if (!flag || maze[start.Position.Y + 1, start.Position.X].UpWall)
-        			{
-                        flag = start.Position.X + 1 < this.width;
-        				if (!flag || maze[start.Position.Y, start.Position.X + 1].LeftWall)
-        				{
-        					rightHandRuleSolve(maze[start.Position.Y, start.Position.X], Directions.Up);
-        				}
-        				else
-                        {
-        					rightHandRuleSolve(maze[start.Position.Y, start.Position.X + 1], Directions.Right);
-        				}
-        			}
-        			else
-                    {
-        				rightHandRuleSolve(maze[start.Position.Y + 1, start.Position.X], Directions.Down);
-        			}
-        		}
-        		else
-                {
-        			rightHandRuleSolve(maze[start.Position.Y, start.Position.X - 1], Directions.Left);
-        		}
-        		break;
-        	}
         }
     }
 }

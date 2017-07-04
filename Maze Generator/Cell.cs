@@ -19,15 +19,15 @@ namespace Maze_Generator
             this.position = position;
 
             // initially, all walls are intact
-            this.LeftWall = true;
-            this.RightWall = true;
-            this.UpWall = true;
-            this.DownWall = true;
-            this.Path = Paths.None;
+            LeftWall = true;
+            RightWall = true;
+            UpWall = true;
+            DownWall = true;
+            Path = Paths.None;
 
             // must be initialized, since it is a member of a struct
-            this.Visited = false;
-            this.Previous = null;
+            Visited = false;
+            Previous = null;
         }
 
         /// <summary>
@@ -79,15 +79,15 @@ namespace Maze_Generator
                 switch (index)
                 {
                     case 0:
-                        return this.LeftWall;
+                        return LeftWall;
                     case 1:
-                        return this.RightWall;
+                        return RightWall;
                     case 2:
-                        return this.UpWall;
+                        return UpWall;
                     case 3:
-                        return this.DownWall;
+                        return DownWall;
                     case 4:
-                        return this.Visited;
+                        return Visited;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -97,19 +97,19 @@ namespace Maze_Generator
                 switch (index)
                 {
                     case 0:
-                        this.LeftWall = value;
+                        LeftWall = value;
                         break;
                     case 1:
-                        this.RightWall = value;
+                        RightWall = value;
                         break;
                     case 2:
-                        this.UpWall = value;
+                        UpWall = value;
                         break;
                     case 3:
-                        this.DownWall = value;
+                        DownWall = value;
                         break;
                     case 4:
-                        this.Visited = value;
+                        Visited = value;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -121,19 +121,13 @@ namespace Maze_Generator
         /// <summary>
         /// The current location on the graphics surface
         /// </summary>
-        public Point Location
-        {
-            get { return this.location; }
-        }
+        public Point Location => location;
 
         private Point position;
         /// <summary>
         /// The current location on the two-dimensional container
         /// </summary>
-        public Point Position
-        {
-            get { return this.position; }
-        }
+        public Point Position => position;
 
         /// <summary>
         /// Reset a cell so that all walls are intact and not visited
@@ -144,7 +138,7 @@ namespace Maze_Generator
             {
                 this[i] = true;
             }
-            this.Visited = false;
+            Visited = false;
         }
 
         /// <summary>
@@ -155,30 +149,29 @@ namespace Maze_Generator
         /// <param name="size">The width of horizontal wall and height of the vertical walls</param>
         public void Draw(Graphics g, Pen pen, Size size)
         {
-            // Draws every wall, if it is intact
-            if (this.LeftWall)
+            if (LeftWall)
             {
                 g.DrawLine(pen,
-                    this.location,
-                    new Point(this.location.X, this.location.Y + size.Height));
+                    location,
+                    new Point(location.X, location.Y + size.Height));
             }
-            if (this.RightWall)
+            if (RightWall)
             {
                 g.DrawLine(pen,
-                    new Point(this.location.X + size.Width, this.location.Y),
-                    new Point(this.location.X + size.Width, this.location.Y + size.Height));
+                    new Point(location.X + size.Width, location.Y),
+                    new Point(location.X + size.Width, location.Y + size.Height));
             }
-            if (this.UpWall)
+            if (UpWall)
             {
                 g.DrawLine(pen,
-                    this.location,
-                    new Point(this.location.X + size.Width, this.location.Y));
+                    location,
+                    new Point(location.X + size.Width, location.Y));
             }
-            if (this.DownWall)
+            if (DownWall)
             {
                 g.DrawLine(pen,
-                    new Point(this.location.X, this.location.Y + size.Height),
-                    new Point(this.location.X + size.Width, this.location.Y + size.Height));
+                    new Point(location.X, location.Y + size.Height),
+                    new Point(location.X + size.Width, location.Y + size.Height));
             }
         }
     }

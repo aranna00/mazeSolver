@@ -31,13 +31,11 @@
             this.components = new System.ComponentModel.Container();
             this.buttonGenerate = new System.Windows.Forms.Button();
             this.numericUpDownLevel = new System.Windows.Forms.NumericUpDown();
-            this.label1 = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.labelWorking = new System.Windows.Forms.Label();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.saveImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.button2 = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.numericUpDownSpeed = new System.Windows.Forms.NumericUpDown();
             this.pictureBoxDraw = new System.Windows.Forms.PictureBox();
@@ -56,7 +54,7 @@
             this.buttonGenerate.Name = "buttonGenerate";
             this.buttonGenerate.Size = new System.Drawing.Size(86, 23);
             this.buttonGenerate.TabIndex = 1;
-            this.buttonGenerate.Text = "Generate with";
+            this.buttonGenerate.Text = "Generate maze";
             this.buttonGenerate.UseVisualStyleBackColor = true;
             this.buttonGenerate.Click += new System.EventHandler(this.buttonGenerate_Click);
             // 
@@ -71,20 +69,8 @@
             this.numericUpDownLevel.Name = "numericUpDownLevel";
             this.numericUpDownLevel.Size = new System.Drawing.Size(73, 20);
             this.numericUpDownLevel.TabIndex = 3;
-            this.numericUpDownLevel.Value = new decimal(new int[] {
-            70,
-            0,
-            0,
-            0});
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(4, 598);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(91, 13);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "Difficulty Level %";
+            this.numericUpDownLevel.Value = new decimal(new int[] {80,0,0,0});
+            this.numericUpDownLevel.Visible = false;
             // 
             // timer1
             // 
@@ -119,16 +105,6 @@
             this.saveImageToolStripMenuItem.Text = "&Save maze as image...";
             this.saveImageToolStripMenuItem.Click += new System.EventHandler(this.saveImageToolStripMenuItem_Click);
             // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(1059, 588);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 8;
-            this.button2.Text = "A&bout";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.buttonAbout_Click);
-            // 
             // label2
             // 
             this.label2.AutoSize = true;
@@ -141,19 +117,11 @@
             // numericUpDownSpeed
             // 
             this.numericUpDownSpeed.Location = new System.Drawing.Point(822, 591);
-            this.numericUpDownSpeed.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            this.numericUpDownSpeed.Minimum = new decimal(new int[] {1,0,0,0});
             this.numericUpDownSpeed.Name = "numericUpDownSpeed";
             this.numericUpDownSpeed.Size = new System.Drawing.Size(73, 20);
             this.numericUpDownSpeed.TabIndex = 9;
-            this.numericUpDownSpeed.Value = new decimal(new int[] {
-            70,
-            0,
-            0,
-            0});
+            this.numericUpDownSpeed.Value = new decimal(new int[] {95,0,0,0});
             this.numericUpDownSpeed.ValueChanged += new System.EventHandler(this.numericUpDownSpeed_ValueChanged);
             // 
             // pictureBoxDraw
@@ -172,7 +140,7 @@
             this.buttonSolve.Name = "buttonSolve";
             this.buttonSolve.Size = new System.Drawing.Size(75, 23);
             this.buttonSolve.TabIndex = 12;
-            this.buttonSolve.Text = "Solve with";
+            this.buttonSolve.Text = "Solve";
             this.buttonSolve.UseVisualStyleBackColor = true;
             this.buttonSolve.Click += new System.EventHandler(this.buttonSolve_Click);
             // 
@@ -181,25 +149,25 @@
             this.comboBoxGenerate.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxGenerate.FormattingEnabled = true;
             this.comboBoxGenerate.Items.AddRange(new object[] {
-            "Depth-First Search",
             "Breadth-First Search"});
             this.comboBoxGenerate.Location = new System.Drawing.Point(359, 593);
             this.comboBoxGenerate.Name = "comboBoxGenerate";
             this.comboBoxGenerate.Size = new System.Drawing.Size(135, 21);
             this.comboBoxGenerate.TabIndex = 13;
+            this.comboBoxGenerate.Visible = false;
             // 
             // comboBoxSolve
             // 
             this.comboBoxSolve.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBoxSolve.FormattingEnabled = true;
             this.comboBoxSolve.Items.AddRange(new object[] {
-            "DFS backtracking",
-            "Breadth-first search",
-            "Right-hand rule"});
+            "DFS backtracking"
+            });
             this.comboBoxSolve.Location = new System.Drawing.Point(612, 593);
             this.comboBoxSolve.Name = "comboBoxSolve";
             this.comboBoxSolve.Size = new System.Drawing.Size(135, 21);
             this.comboBoxSolve.TabIndex = 14;
+            this.comboBoxSolve.Visible = false;
             // 
             // Form1
             // 
@@ -210,11 +178,9 @@
             this.Controls.Add(this.comboBoxGenerate);
             this.Controls.Add(this.pictureBoxDraw);
             this.Controls.Add(this.buttonSolve);
-            this.Controls.Add(this.button2);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.numericUpDownSpeed);
             this.Controls.Add(this.labelWorking);
-            this.Controls.Add(this.label1);
             this.Controls.Add(this.numericUpDownLevel);
             this.Controls.Add(this.buttonGenerate);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -235,13 +201,11 @@
 
         private System.Windows.Forms.Button buttonGenerate;
         private System.Windows.Forms.NumericUpDown numericUpDownLevel;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Timer timer1;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.Label labelWorking;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem saveImageToolStripMenuItem;
-        private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.NumericUpDown numericUpDownSpeed;
         private System.Windows.Forms.PictureBox pictureBoxDraw;
